@@ -1,6 +1,6 @@
 import React from 'react';
 import gql from 'graphql-tag';
-import { Query, useMutation } from 'react-apollo';
+import { Query, Mutation } from 'react-apollo';
 import {
   Card,
   ResourceList,
@@ -54,6 +54,7 @@ query {
             edges {
               node {
                 id,
+                key,
                 value
               }
             }
@@ -65,10 +66,17 @@ query {
 `;
 
 class ProductList extends React.Component {
+  state = {
+    height: 0,
+    width: 0,
+    weight: 0,
+    showToast: false,
+  };
   static contextType = Context;
   
 
   render() {
+    const { showToast } = this.state;
     const app = this.context;
     const redirectToProduct = () => {
       /* const redirect = Redirect.create(app);
@@ -89,12 +97,28 @@ class ProductList extends React.Component {
           if(data) {
           return (
             <Card>
+              <Mutation
+                mutation={UPDATE_PRODUCT}
+              >
+                {(handleSubmit, {error, dataPro}) => {
+                  const showError = error && (
+                    <Banner status="critical">{error.message}</Banner>
+                  );
+                  console.log(error);
+                  console.log(dataPro);
+                  const showToast = dataPro && (
+                    <Toast
+                      content="Sucessfully updated"
+                      onDismiss={() => this.setState({ showToast: false })}
+                    />
+                  );
+                  return(
               <ResourceList
                 showHeader
                 resourceName={{ singular: 'Product', plural: 'Products' }}
                 items={data?.products?.edges}
                 renderItem={item => {
-                  const media = (
+                  const media = ( 
                     <Thumbnail
                       source={
                         item.node.images.edges[0]
@@ -109,6 +133,15 @@ class ProductList extends React.Component {
                     />
                   );
                   const price = 123;
+                  let height = 0;
+                  let width = 0;
+                  let large = 0;
+
+                  for (let i = 0; i < item.node.metafields.edges.length; i++) {
+                      height = item.node.metafields.edges[i].node.key==="height"? item.node.metafields.edges[i].node.value : height;
+                      width = item.node.metafields.edges[i].node.key==="width"? item.node.metafields.edges[i].node.value : width;
+                      large = item.node.metafields.edges[i].node.key==="large"? item.node.metafields.edges[i].node.value : large;
+                  }
                   return (
                     <ResourceList.Item
                       id={item.node.id}
@@ -128,30 +161,58 @@ class ProductList extends React.Component {
                           </h3>
                         </Stack.Item>
                         <Stack.Item>
-                            <label htmlFor="Width" className="form-label">Width</label>
+                            <label htmlFor="Ancho en cm" className="form-label">Ancho {height} cm</label>
                             <input type="number" className="form-control" id={"width"+item.node.id}/>
                         </Stack.Item>
                         <Stack.Item>
-                            <label htmlFor="Height" className="form-label">Height</label>
+                            <label htmlFor="Alto en cm" className="form-label">Alto {width} cm</label>
                             <input type="number" className="form-control" id={"height"+item.node.id}/>
                         </Stack.Item>
                         <Stack.Item>
-                            <label htmlFor="weight" className="form-label">weight</label>
-                            <input type="number" className="form-control" id={"weight"+item.node.id} />
+                            <label htmlFor="large en cm" className="form-label">large {large} cm</label>
+                            <input type="number" className="form-control" id={"large"+item.node.id} />
                         </Stack.Item>
                         <Stack.Item>
                             <button onClick={()=> {
-                              let width = document.getElementById('width'+item.node.id);
-                              let height = document.getElementById('height'+item.node.id);
-                              let weight = document.getElementById('weight'+item.node.id);
-                              this.updateProducts(item, width, height, weight)
-                              }} type="button" className="btn btn-danger">Actualizar</button>
+                              const widthIn = document.getElementById('width'+item.node.id);
+                              const heightIn = document.getElementById('height'+item.node.id);
+                              const largeIn = document.getElementById('large'+item.node.id);
+                              handleSubmit({
+                                variables: {
+                                  "input" : {
+                                    "id": item.node.id,
+                                    "metafields": [
+                                      {
+                                        "namespace": "width",
+                                        "key": "width",
+                                        "valueType": "INTEGER",
+                                        "value": widthIn.value
+                                      },
+                                      {
+                                        "namespace": "height",
+                                        "key": "height",
+                                        "valueType": "INTEGER",
+                                        "value": heightIn.value
+                                      },
+                                      {
+                                        "namespace": "large",
+                                        "key": "large",
+                                        "valueType": "INTEGER",
+                                        "value": largeIn.value
+                                      }
+                                    ]
+                                  }
+                                },
+                              });
+                              }} type="button" className="btn btn-success">Actualizar</button>
                         </Stack.Item>
                       </Stack>
                     </ResourceList.Item>
                   );
                 }}
               />
+              )}}
+              </Mutation>
             </Card>
           );
         } 
@@ -160,8 +221,7 @@ class ProductList extends React.Component {
     );
   }
   updateProducts(item, width, height, weight) {
-      const [toggleTodoMutation] = useMutation(UPDATE_PRODUCT);
-      const toggleTodoMutation = {
+      const [toggleTodoMutation] = useMutation(UPDATE_PRODUCT, {
         variables: {
           "input" : {
             "id": item.node.id,
@@ -184,8 +244,7 @@ class ProductList extends React.Component {
             ]
           }
         },
-        optimisticResponse: true,
-      };
+      });
   }
 }
 
