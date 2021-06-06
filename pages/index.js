@@ -4,6 +4,9 @@ import { ResourcePicker, TitleBar } from '@shopify/app-bridge-react';
 import store from 'store-js';
 import ResourceListWithProducts from '../components/ResourceList';
 import ProductList from '../components/ProductsList';
+import Envios from '../components/Envios';
+
+import axios from 'axios';
 
 const img = 'https://cdn.shopify.com/s/files/1/0757/9955/files/empty-state.svg';
 
@@ -14,13 +17,10 @@ class Index extends React.Component {
 
     return (
       <Page>
-        <TitleBar
-          title="Sample App"
-          primaryAction={{
-            content: 'Select products',
-            onAction: () => this.setState({ open: true }),
-          }}
-        />
+        <hr></hr>
+        <Envios></Envios>
+        {cargarServicios()}
+        <hr></hr>
         <ProductList></ProductList>
       </Page>
     );
@@ -30,30 +30,19 @@ class Index extends React.Component {
     this.setState({ open: false });
     store.set('ids', idsFromResources);
   };
+  cargarServicios = () => {
+    axios.get('https://facturacion.enviame.io/api/v1/prices?from_place=Pudahuel&to_place=Quilicura&weight=1',{
+      headers: {
+        'x-api-key': 'afw6mcptnjy448t227a1vh74lcv36jhz '
+      }
+     })
+      .then((response) => {
+        console.log(response);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  }
 }
 
 export default Index;
-
-{/* <ResourcePicker
-          resourceType="Product"
-          showVariants={false}
-          open={this.state.open}
-          onSelection={(resources) => this.handleSelection(resources)}
-          onCancel={() => this.setState({ open: false })}
-        />
-        {emptyState ? (
-          <Layout>
-            <EmptyState
-              heading="Discount your products temporarily"
-              action={{
-                content: 'Select products',
-                onAction: () => this.setState({ open: true }),
-              }}
-              image={img}
-            >
-              <p>Select products to change their price temporarily.</p>
-            </EmptyState>
-          </Layout>
-        ) : (
-          <ResourceListWithProducts />
-        )} */}
