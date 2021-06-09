@@ -1,123 +1,73 @@
-import React from 'react';
-import gql from 'graphql-tag';
-import { Query, Mutation } from 'react-apollo';
-import {
-  Card,
-  ResourceList,
-  Stack,
-  TextStyle,
-  Thumbnail,
-  FormLayout,
-  TextField
-} from '@shopify/polaris';
-import store from 'store-js';
-import { Redirect } from '@shopify/app-bridge/actions';
+import React, {useCallback, useState} from 'react';
 import { Context } from '@shopify/app-bridge-react';
+import axios from 'axios';
 
-const UPDATE_PRODUCT= gql`
-mutation($input: ProductInput!) {
-  productUpdate(input: $input) {
-    product {
-      metafields(first: 100) {
-        edges {
-          node {
-            id
-            namespace
-            key
-            value
-          }
-        }
-      }
-    }
-  }
-}
-`;
 
-const GET_PRODUCTS_BY_ID = gql`
-query {
-    products(first: 10) {
-      edges {
-        node {
-            title
-            handle
-            descriptionHtml
-            id
-            images(first: 1) {
-              edges {
-                node {
-                  originalSrc
-                  altText
-                }
-              }
-            }
-          metafields(first:10) {
-            edges {
-              node {
-                id,
-                key,
-                value
-              }
-            }
-          }
-        }
+const List = (props) => (
+  <ul>
+      {
+          props.items.map((item, i) => {
+              return <li key={i}>{item.name}</li>
+          })
       }
-    }
-  }
-`;
+  </ul>
+)
 
 class Envios extends React.Component {
-  state = {
-    height: 0,
-    width: 0,
-    weight: 0,
-    showToast: false,
-  };
+
   static contextType = Context;
-  
 
-  render() {
-    const { showToast } = this.state;
-    const app = this.context;
-    const redirectToProduct = () => {
-      /* const redirect = Redirect.create(app);
-      redirect.dispatch(
-        Redirect.Action.APP,
-        '/edit-products',
-      ); */
+  constructor() {
+    super();
+    this.state = { 
+        done: false,
+        items: []
     };
+}
 
-    const twoWeeksFromNow = new Date(Date.now() + 12096e5).toDateString();
-
-    return (
-        <h1>Servicios de Envio</h1>
-    );
-  }
-  updateProducts(item, width, height, weight) {
-      const [toggleTodoMutation] = useMutation(UPDATE_PRODUCT, {
-        variables: {
-          "input" : {
-            "id": item.node.id,
-            "metafields": [
-              {
-                "namespace": "width",
-                "key": "width",
-                "value": width.value
-              },
-              {
-                "namespace": "height",
-                "key": "height",
-                "value": height.value
-              },
-              {
-                "namespace": "weight",
-                "key": "weight",
-                "value": weight.value
-              }
-            ]
-          }
-        },
-      });
-  }
+componentDidMount() {
+    /* fetch('https://facturacion.enviame.io/api/v1/prices?from_place=Pudahuel&to_place=Quilicura&weight=1', { 
+      method: 'get', 
+      headers: new Headers({
+        'x-api-key': 'afw6mcptnjy448t227a1vh74lcv36jhz',
+        'Content-Type': 'application/json'
+      })
+    })
+    .then(result=>result.json())
+    .then(items=>this.setState({
+      done: true,
+      items: items.data
+    }))
+    .catch(() => {
+    }); */
+    
+    axios.get('https://facturacion.enviame.io/api/v1/prices?from_place=Pudahuel&to_place=Quilicura&weight=1',{
+        headers: {
+          'Accept': 'application/json',
+          'x-api-key': 'afw6mcptnjy448t227a1vh74lcv36jhz'
+        }
+        })
+        .then(items=> {
+          console.log(items);
+          this.setState({
+          done: true,
+          items: items.data
+          });
+        })
+        .catch((error) => {
+        });
+}
+render() {
+  return(
+      <div>
+          {this.state.done && this.state.items.isArray() ? (
+              <List items={this.state.items} />
+          ) : (
+              <p>Cargando Servicios......</p>
+          )}
+      </div>
+  )
+}
 }
 
 export default Envios;

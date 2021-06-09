@@ -19,7 +19,7 @@ class Index extends React.Component {
       <Page>
         <hr></hr>
         <Envios></Envios>
-        {cargarServicios()}
+        
         <hr></hr>
         <ProductList></ProductList>
       </Page>
@@ -30,19 +30,6 @@ class Index extends React.Component {
     this.setState({ open: false });
     store.set('ids', idsFromResources);
   };
-  cargarServicios = () => {
-    axios.get('https://facturacion.enviame.io/api/v1/prices?from_place=Pudahuel&to_place=Quilicura&weight=1',{
-      headers: {
-        'x-api-key': 'afw6mcptnjy448t227a1vh74lcv36jhz '
-      }
-     })
-      .then((response) => {
-        console.log(response);
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  }
 }
 
 export default Index;
