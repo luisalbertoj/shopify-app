@@ -40,6 +40,7 @@ app.prepare().then(() => {
         ctx.redirect(`/?shop=${shop}`);
       },
     }),
+
   );
 
   router.post("/graphql", verifyRequest({returnHeader: true}), async (ctx, next) => {
